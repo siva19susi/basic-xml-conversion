@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>XML Conversion</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+		<script defer src="https://use.fontawesome.com/releases/v5.0.0/js/all.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	</head>
+	<body>
+		<section class="section">
+			<div class="container">
+				<div class="notification">
+					<h1 class="title">XML Conversion</h1>
+				</div>
+				<form autocomplete="off" enctype="multipart/form-data" id="formid">
+					<div class="columns">
+						<div class="column">
+							<div class="field has-addons">
+								<div class="control">
+									<a class="button is-static">Name</a>
+								</div>
+								<div class="control is-expanded">
+									<input class="input" type="text" placeholder="Alex Smith" id="name" name="name" style="text-transform: capitalize;" onclick="clearMessage()">
+								</div>
+							</div>
+						</div>
+						<div class="column">
+							<div class="field">
+								<div class="control">
+									<span class="select is-fullwidth">
+										<select id="xmlaction" onchange="enableUpload(); clearMessage();">
+											<option>Action...</option>
+											<option>XML to JSON</option>
+											<option>XML to CSV</option>
+										</select>
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="column">
+							<div class="field">
+								<div class="control">
+									<div class="file has-name is-fullwidth is-hidden" id="div_file">
+										<label class="file-label">
+											<input class="file-input" type="file" name="file" id="file" onchange="initialiseFile()" onclick="clearMessage()">
+											<span class="file-cta">
+												<span class="file-icon">
+													<i class="fas fa-upload"></i>
+												</span>
+												<span class="file-label" id="filelabel">Select file</span>
+											</span>
+											<span class="file-name" id="filename"></span>
+										</label>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="columns">
+						<div class="column">
+							<div class="field is-grouped is-grouped-right">
+								<div class="control">
+									<a class="button is-danger is-outlined" id="clear" onkeypress="clearAll()" onclick="clearAll()" tabindex="0">Clear All</a>
+								</div>
+								<div class="control">
+									<a class="button is-success" id="convert" onkeypress="xmlConvert()" onclick="xmlConvert()" tabindex="0">
+										<span>Convert</span>
+										<span class="icon is-small">
+											<i class="fas fa-sort-amount-down"></i>
+										</span>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</form>
+				<hr>
+				<div id="result"></div>
+				<div class="columns">
+					<div class="column is-half is-offset-one-quarter">
+						<div class="notification is-primary is-hidden" id="alert">
+							<a class="delete" onkeypress="clearMessage()" onclick="clearMessage()" tabindex="0"></a>
+							<div class="has-text-centered" id="message">Clearly something is unusal.</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</body>
+	<script>
+		function clearFile()
+		{
+			document.getElementById("file").value = "";
+			document.getElementById("filelabel").innerHTML = "Select file";
+			document.getElementById("filename").innerHTML = "";
+		}
+
+		function clearInputs() 
+		{
+			document.getElementById("name").value = "";
+			document.getElementById("div_file").className = "file has-name is-fullwidth is-hidden";
+			document.getElementById("xmlaction").value = "Action...";
+			clearFile();
+		}
+
+		function clearAll()
+		{
+			clearInputs();
+			clearMessage();
+			document.getElementById("clear").blur();
+		}
+
+		function clearMessage()
+		{
+			document.getElementById("alert").className = "notification is-primary is-hidden";
+			document.getElementById("message").innerHTML = "";
+			document.getElementById("result").innerHTML = "";
+		}
+		
+		function notify(type, message)
+		{
+			document.getElementById("alert").className = "notification " + type;
+			document.getElementById("message").innerHTML = message;
+		}
+
+		function enableUpload()
+		{
+			var xmlaction = document.getElementById("xmlaction").value;
+			
+			if(xmlaction != "Action...")
+				document.getElementById("div_file").className = "file has-name is-fullwidth";
+			else
+				document.getElementById("div_file").className = "file has-name is-fullwidth is-hidden";
+		}
+
+		function initialiseFile()
+		{
+			var inputName = document.getElementById("name").value.trim(),
+				inputFile = document.getElementById("file");
+			var extension = getExtension(inputFile.files[0].name);
+			
+			if(inputName != "")
+			{
+				if(extension.toLowerCase() == "xml")
+				{
+					document.getElementById("div_file").className = "file has-name is-fullwidth is-info";
+					document.getElementById("filelabel").innerHTML = "Selected";
+					document.getElementById("filename").innerHTML = inputFile.files[0].name;
+					notify("is-primary", "XML file selected.");
+				}
+				else 
+					notify("is-danger", "File type has to be XML.");
+			}
+			else
+			{
+				clearFile();
+				notify("is-danger", "Name field is empty.");
+			}
+		}
+
+		function getExtension(filename) 
+		{
+	    	var parts = filename.split('.');
+	    	return parts[parts.length - 1];
+		}
+
+		function xmlConvert()
+		{
+			clearMessage();
+
+			var inputName = document.getElementById("name").value.trim(),
+				xmlaction = document.getElementById("xmlaction").value,
+				inputFile = document.getElementById("file");
+				file_data = $("#file").prop("files")[0];
+
+			if(inputName != "" && file_data != null && xmlaction != "Action...")
+			{
+				var formData = new FormData();
+			        formData.append("name", inputName);
+			        formData.append("xmlaction", xmlaction);
+			        formData.append("file", file_data);
+
+				if(xmlaction == "XML to JSON")
+		      	{
+			     	$.ajax ({
+						url: "php/jsonConvert.php",
+						type: "POST",
+						data: formData,
+						cache: false,
+						async: false,
+						contentType: false,
+						processData: false,
+						success: function(response) {
+							$("#result").html(response);
+						}
+			        });
+					clearInputs();
+		      	}
+		      	else
+		      	{
+		      		var update;
+
+			        $.ajax ({
+						url: "php/xmlUpload.php",
+						type: "POST",
+						data: formData,
+						cache: false,
+						async: false,
+						contentType: false,
+						processData: false,
+						success: function(response) {
+							update = response;
+						}
+			        });
+					
+					notify("is-primary", update + " The CSV file will be downloaded shortly.");
+					fileInfo = inputName + "_" + inputFile.files[0].name;
+					
+					if(update.includes("has been uploaded"))
+					{
+						var parameters = "?name=" + inputName + "&xmlaction=" + xmlaction + "&fileInfo=" + fileInfo;
+						window.location = "php/csvConvert.php" + parameters;
+						clearInputs();
+					}
+					else
+					{
+						notify("is-danger", "Name field altered after file upload.");
+						clearInputs();
+					}
+		      	}
+		      	document.getElementById("convert").blur();
+			}
+	      	else
+	      	{
+	      		notify("is-danger", "All fields are compulsory.");
+	      		document.getElementById("convert").blur();
+	      	}
+		}
+	</script>
+</html>
