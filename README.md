@@ -9,5 +9,5 @@ This code will help you learn:
 
 # Getting Started
 1. Start a local server (can use either docker, XAMPP or Apache). 
-2. Copy the files within the server localhost directory. 
+2. Copy the src folder within the server localhost directory. 
 3. Run http://localhost on the browser to load the page.
